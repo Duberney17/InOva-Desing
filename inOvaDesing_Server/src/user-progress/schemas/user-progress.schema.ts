@@ -5,23 +5,30 @@ export type UserProgressDocument = HydratedDocument<UserProgress>;
 
 @Schema({ timestamps: true })
 export class UserProgress {
-  @Prop()
-  idProgress: string;
-
-  @Prop()
+  @Prop({ required: true })
   idOVA: string;
 
-  @Prop()
-  idUser: string;
+  @Prop({ required: true })
+  idEstudiante: string;
 
-  @Prop()
-  phase: string;
+  /**
+   * Fases completadas. Cada fase se agrega al guardar (CU-7)
+   * Valores posibles: 'analisis' | 'diseno' | 'desarrollo' | 'implementacion' | 'evaluacion'
+   */
+  @Prop({ type: [String], default: [] })
+  fasesCompletadas: string[];
 
-  @Prop()
-  percentage: number;
+  /**
+   * Fase en la que está trabajando actualmente
+   */
+  @Prop({ default: 'analisis' })
+  faseActual: string;
 
-  @Prop()
-  updateDate: Date;
+  /**
+   * Porcentaje calculado: (fasesCompletadas.length / 5) * 100
+   */
+  @Prop({ default: 0 })
+  porcentaje: number;
 }
 
 export const UserProgressSchema = SchemaFactory.createForClass(UserProgress);

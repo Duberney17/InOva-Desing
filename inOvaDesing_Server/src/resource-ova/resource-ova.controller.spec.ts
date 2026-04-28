@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ResourceOvaController } from './resource-ova.controller';
-import { ResourceOvaService } from './resource-ova.service';
+import { LearningResourceController } from './resource-ova.controller';
+import { LearningResourceService } from './resource-ova.service';
 
-describe('ResourceOvaController', () => {
-  let controller: ResourceOvaController;
+describe('LearningResourceController', () => {
+  let controller: LearningResourceController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ResourceOvaController],
-      providers: [ResourceOvaService],
+      controllers: [LearningResourceController],
+      providers: [LearningResourceService],
     }).compile();
 
-    controller = module.get<ResourceOvaController>(ResourceOvaController);
+    controller = module.get<LearningResourceController>(LearningResourceController);
   });
 
   it('should be defined', () => {

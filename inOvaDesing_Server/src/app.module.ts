@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { OvasModule } from './ovas/ovas.module';
 import { UsersModule } from './users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import dns from 'node:dns';
 import { AnalysisPhaseModule } from './analysis-phase/analysis-phase.module';
 import { DesignPhaseModule } from './design-phase/design-phase.module';
 import { DevelopmentPhaseModule } from './development-phase/development-phase.module';
@@ -24,9 +27,28 @@ import { ImplentationPhaseModule } from './implentation-phase/implentation-phase
 
 @Module({
   imports: [
-    MongooseModule.forRoot(
-      'mongodb+srv://duberneybarreraortega_db_user:rv8nzxfm86mxzWYc@cluster0.pkgnfwu.mongodb.net/?appName=Cluster0',
-    ),
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => {
+        const dnsServersRaw = config.get<string>('DNS_SERVERS');
+        if (dnsServersRaw) {
+          const dnsServers = dnsServersRaw
+            .split(',')
+            .map((value) => value.trim())
+            .filter(Boolean);
+          if (dnsServers.length > 0) {
+            dns.setServers(dnsServers);
+          }
+        }
+
+        return {
+          uri: config.get<string>('MONGODB_URI'),
+        };
+      },
+      inject: [ConfigService],
+    }),
+    AuthModule,
     OvasModule,
     UsersModule,
     AnalysisPhaseModule,

@@ -8,42 +8,50 @@ import { UpdateOvaDto } from './dto/update-ova.dto';
 @Injectable()
 export class OvasService {
   constructor(
-    @InjectModel(Ova.name)
-    private readonly model: Model<OvaDocument>,
+    @InjectModel(Ova.name) private readonly model: Model<OvaDocument>,
   ) {}
 
-  // CREATE
-  async create(createOvaDto: CreateOvaDto) {
-    const created = new this.model(createOvaDto);
-    return await created.save();
+  // ── CREATE ────────────────────────────────────────────────────────────────
+  async create(dto: CreateOvaDto) {
+    return this.model.create(dto);
   }
 
-  // GET ALL
+  // ── FIND ALL ──────────────────────────────────────────────────────────────
   async findAll() {
-    return await this.model.find().exec();
+    return this.model.find().exec();
   }
 
-  // GET ONE
+  // ── FIND ONE ──────────────────────────────────────────────────────────────
   async findOne(id: string) {
     const ova = await this.model.findById(id).exec();
-    if (!ova) throw new NotFoundException(`OVA with id ${id} not found`);
+    if (!ova) throw new NotFoundException(`OVA ${id} no encontrado`);
     return ova;
   }
 
-  // UPDATE
-  async update(id: string, updateOvaDto: UpdateOvaDto) {
-    const updated = await this.model
-      .findByIdAndUpdate(id, updateOvaDto, { new: true })
-      .exec();
+  // ── OVAs DE UN ESTUDIANTE (CU-3, CU-9) ───────────────────────────────────
+  async findByStudent(idEstudiante: string) {
+    return this.model.find({ idEstudiante }).exec();
+  }
 
-    if (!updated) throw new NotFoundException(`OVA with id ${id} not found`);
+  // ── OVAs DE LOS ESTUDIANTES DE UN DOCENTE (dashboard docente) ────────────
+  // Recibe la lista de IDs de estudiantes del docente y devuelve sus OVAs
+  async findByStudentIds(studentIds: string[]) {
+    return this.model.find({ idEstudiante: { $in: studentIds } }).exec();
+  }
+
+  // ── UPDATE ────────────────────────────────────────────────────────────────
+  async update(id: string, dto: UpdateOvaDto) {
+    const updated = await this.model
+      .findByIdAndUpdate(id, dto, { new: true })
+      .exec();
+    if (!updated) throw new NotFoundException(`OVA ${id} no encontrado`);
     return updated;
   }
 
-  // DELETE
+  // ── DELETE ────────────────────────────────────────────────────────────────
   async remove(id: string) {
     const deleted = await this.model.findByIdAndDelete(id).exec();
-    if (!deleted) throw new NotFoundException(`OVA with id ${id} not found`);
-    return { message: `OVA ${id} deleted successfully` };
+    if (!deleted) throw new NotFoundException(`OVA ${id} no encontrado`);
+    return { message: `OVA ${id} eliminado correctamente` };
   }
 }

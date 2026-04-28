@@ -1,45 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  AnalysisPhase,
-  AnalysisPhaseDocument,
-} from './schemas/analysis.schema';
+import { AnalysisPhase, AnalysisPhaseDocument } from './schemas/analysis.schema';
 import { CreateAnalysisPhaseDto } from './dto/create-analysis-phase.dto';
 import { UpdateAnalysisPhaseDto } from './dto/update-analysis-phase.dto';
 
 @Injectable()
 export class AnalysisPhaseService {
   constructor(
-    @InjectModel(AnalysisPhase.name)
-    private model: Model<AnalysisPhaseDocument>,
+    @InjectModel(AnalysisPhase.name) private model: Model<AnalysisPhaseDocument>,
   ) {}
 
-  // CREATE
-  async create(createDto: CreateAnalysisPhaseDto) {
-    const newRecord = new this.model(createDto);
-    return await newRecord.save();
+  async create(dto: CreateAnalysisPhaseDto) {
+    return this.model.create(dto);
   }
 
-  // FIND ALL
   async findAll() {
-    return await this.model.find().exec();
+    return this.model.find().exec();
   }
 
-  // FIND ONE (Mongo _id)
   async findOne(id: string) {
-    return await this.model.findById(id).exec();
+    const doc = await this.model.findById(id).exec();
+    if (!doc) throw new NotFoundException(`AnalysisPhase ${id} no encontrada`);
+    return doc;
   }
 
-  // UPDATE
-  async update(id: string, updateDto: UpdateAnalysisPhaseDto) {
-    return await this.model
-      .findByIdAndUpdate(id, updateDto, { new: true })
-      .exec();
+  async findByOva(idOVA: string) {
+    return this.model.findOne({ idOVA }).exec();
   }
 
-  // DELETE
+  async update(id: string, dto: UpdateAnalysisPhaseDto) {
+    const updated = await this.model.findByIdAndUpdate(id, dto, { new: true }).exec();
+    if (!updated) throw new NotFoundException(`AnalysisPhase ${id} no encontrada`);
+    return updated;
+  }
+
   async remove(id: string) {
-    return await this.model.findByIdAndDelete(id).exec();
+    const deleted = await this.model.findByIdAndDelete(id).exec();
+    if (!deleted) throw new NotFoundException(`AnalysisPhase ${id} no encontrada`);
+    return { message: 'Fase de análisis eliminada' };
   }
 }

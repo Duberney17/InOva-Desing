@@ -5,20 +5,21 @@ export type OvaDocument = HydratedDocument<Ova>;
 
 @Schema({ timestamps: true })
 export class Ova {
-  @Prop()
-  idOva: string;
-
-  @Prop()
+  @Prop({ required: true })
   title: string;
 
-  @Prop()
-  descript: string;
+  @Prop({ default: '' })
+  description: string;
 
-  @Prop()
-  createDate: Date;
+  /**
+   * ID del estudiante que creó este OVA (MongoDB _id del User)
+   */
+  @Prop({ required: true })
+  idEstudiante: string;
 
-  @Prop()
-  state: boolean;
+  @Prop({ default: 'en_progreso', enum: ['en_progreso', 'completado', 'revisado'] })
+  state: string;
 }
 
-export const OvaShema = SchemaFactory.createForClass(Ova);
+// Fix al typo original: OvaShema → OvaSchema
+export const OvaSchema = SchemaFactory.createForClass(Ova);

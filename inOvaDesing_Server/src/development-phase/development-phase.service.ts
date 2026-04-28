@@ -1,48 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  DevelopmentPhase,
-  DevelopmentPhaseDocument,
-} from './schemas/development-phase.schema';
-import { UpdateDevelopmentPhaseDto } from './dto/update-development-phase.dto';
+import { DevelopmentPhase, DevelopmentPhaseDocument } from './schemas/development-phase.schema';
 import { CreateDevelopmentPhaseDto } from './dto/create-development-phase.dto';
+import { UpdateDevelopmentPhaseDto } from './dto/update-development-phase.dto';
 
 @Injectable()
 export class DevelopmentPhaseService {
   constructor(
-    @InjectModel(DevelopmentPhase.name)
-    private readonly model: Model<DevelopmentPhaseDocument>,
+    @InjectModel(DevelopmentPhase.name) private model: Model<DevelopmentPhaseDocument>,
   ) {}
 
-  // POST /development-phase
-  async create(createDevelopmentPhaseDto: CreateDevelopmentPhaseDto) {
-    const doc = new this.model(createDevelopmentPhaseDto);
-    return await doc.save();
+  async create(dto: CreateDevelopmentPhaseDto) {
+    return this.model.create(dto);
   }
 
-  // GET /development-phase
   async findAll() {
-    return await this.model.find().exec();
+    return this.model.find().exec();
   }
 
-  // GET /development-phase/:id
   async findOne(id: string) {
-    return await this.model.findById(id).exec();
+    const doc = await this.model.findById(id).exec();
+    if (!doc) throw new NotFoundException(`DevelopmentPhase ${id} no encontrada`);
+    return doc;
   }
 
-  // PATCH /development-phase/:id
-  async update(
-    id: string,
-    updateDevelopmentPhaseDto: UpdateDevelopmentPhaseDto,
-  ) {
-    return await this.model.findByIdAndUpdate(id, updateDevelopmentPhaseDto, {
-      new: true, // devuelve el documento actualizado
-    });
+  async findByOva(idOVA: string) {
+    return this.model.findOne({ idOVA }).exec();
   }
 
-  // DELETE /development-phase/:id
+  async update(id: string, dto: UpdateDevelopmentPhaseDto) {
+    const updated = await this.model.findByIdAndUpdate(id, dto, { new: true }).exec();
+    if (!updated) throw new NotFoundException(`DevelopmentPhase ${id} no encontrada`);
+    return updated;
+  }
+
   async remove(id: string) {
-    return await this.model.findByIdAndDelete(id).exec();
+    const deleted = await this.model.findByIdAndDelete(id).exec();
+    if (!deleted) throw new NotFoundException(`DevelopmentPhase ${id} no encontrada`);
+    return { message: 'Fase de desarrollo eliminada' };
   }
 }

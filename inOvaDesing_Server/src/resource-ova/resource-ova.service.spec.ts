@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ResourceOvaService } from './resource-ova.service';
+import { LearningResourceService } from './resource-ova.service';
 
-describe('ResourceOvaService', () => {
-  let service: ResourceOvaService;
+describe('LearningResourceService', () => {
+  let service: LearningResourceService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ResourceOvaService],
+      providers: [LearningResourceService],
     }).compile();
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-    service = module.get<ResourceOvaService>(ResourceOvaService);
+    service = module.get<LearningResourceService>(LearningResourceService);
   });
 
   it('should be defined', () => {

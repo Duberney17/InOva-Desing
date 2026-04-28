@@ -1,45 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  DesignPhase,
-  DesignPhaseDocument,
-} from './schemas/design-phase.schema';
+import { DesignPhase, DesignPhaseDocument } from './schemas/design-phase.schema';
 import { CreateDesignPhaseDto } from './dto/create-design-phase.dto';
 import { UpdateDesignPhaseDto } from './dto/update-design-phase.dto';
 
 @Injectable()
 export class DesignPhaseService {
   constructor(
-    @InjectModel(DesignPhase.name)
-    private model: Model<DesignPhaseDocument>,
+    @InjectModel(DesignPhase.name) private model: Model<DesignPhaseDocument>,
   ) {}
 
-  // CREATE
-  async create(createDto: CreateDesignPhaseDto) {
-    const newRecord = new this.model(createDto);
-    return await newRecord.save();
+  async create(dto: CreateDesignPhaseDto) {
+    return this.model.create(dto);
   }
 
-  // FIND ALL
   async findAll() {
-    return await this.model.find().exec();
+    return this.model.find().exec();
   }
 
-  // FIND ONE
   async findOne(id: string) {
-    return await this.model.findById(id).exec();
+    const doc = await this.model.findById(id).exec();
+    if (!doc) throw new NotFoundException(`DesignPhase ${id} no encontrada`);
+    return doc;
   }
 
-  // UPDATE
-  async update(id: string, updateDto: UpdateDesignPhaseDto) {
-    return await this.model
-      .findByIdAndUpdate(id, updateDto, { new: true })
-      .exec();
+  async findByOva(idOVA: string) {
+    return this.model.findOne({ idOVA }).exec();
   }
 
-  // DELETE
+  async update(id: string, dto: UpdateDesignPhaseDto) {
+    const updated = await this.model.findByIdAndUpdate(id, dto, { new: true }).exec();
+    if (!updated) throw new NotFoundException(`DesignPhase ${id} no encontrada`);
+    return updated;
+  }
+
   async remove(id: string) {
-    return await this.model.findByIdAndDelete(id).exec();
+    const deleted = await this.model.findByIdAndDelete(id).exec();
+    if (!deleted) throw new NotFoundException(`DesignPhase ${id} no encontrada`);
+    return { message: 'Fase de diseño eliminada' };
   }
 }

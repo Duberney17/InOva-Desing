@@ -1,10 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  InstructorEvaluation,
-  InstructorEvaluationDocument,
-} from './schemas/instructor-eval.schema';
+import { InstructorEvaluation, InstructorEvaluationDocument } from './schemas/instructor-eval.schema';
 import { CreateInstructorEvalDto } from './dto/create-instructor-eval.dto';
 import { UpdateInstructorEvalDto } from './dto/update-instructor-eval.dto';
 
@@ -15,32 +12,44 @@ export class InstructorEvaluationService {
     private readonly model: Model<InstructorEvaluationDocument>,
   ) {}
 
-  // POST /instructor-evaluation
-  async create(createDto: CreateInstructorEvalDto) {
-    const doc = new this.model(createDto);
-    return await doc.save();
+  async create(dto: CreateInstructorEvalDto) {
+    return this.model.create(dto);
   }
 
-  // GET /instructor-evaluation
   async findAll() {
-    return await this.model.find().exec();
+    return this.model.find().exec();
   }
 
-  // GET /instructor-evaluation/:id
   async findOne(id: string) {
-    return await this.model.findById(id).exec();
+    const doc = await this.model.findById(id).exec();
+    if (!doc) throw new NotFoundException(`Evaluación ${id} no encontrada`);
+    return doc;
   }
 
-  // PATCH /instructor-evaluation/:id
-  async update(id: string, updateDto: UpdateInstructorEvalDto) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return await this.model.findByIdAndUpdate(id, updateDto, {
-      new: true,
-    });
+  // ── Evaluaciones de un OVA (todas las fases) ──────────────────────────────
+  async findByOva(idOVA: string) {
+    return this.model.find({ idOVA }).exec();
   }
 
-  // DELETE /instructor-evaluation/:id
+  // ── Evaluación de una fase específica de un OVA ────────────────────────────
+  async findByOvaAndFase(idOVA: string, fase: string) {
+    return this.model.findOne({ idOVA, fase }).exec();
+  }
+
+  // ── Todas las evaluaciones hechas por un docente ───────────────────────────
+  async findByDocente(idDocente: string) {
+    return this.model.find({ idDocente }).exec();
+  }
+
+  async update(id: string, dto: UpdateInstructorEvalDto) {
+    const updated = await this.model.findByIdAndUpdate(id, dto, { new: true }).exec();
+    if (!updated) throw new NotFoundException(`Evaluación ${id} no encontrada`);
+    return updated;
+  }
+
   async remove(id: string) {
-    return await this.model.findByIdAndDelete(id).exec();
+    const deleted = await this.model.findByIdAndDelete(id).exec();
+    if (!deleted) throw new NotFoundException(`Evaluación ${id} no encontrada`);
+    return { message: 'Evaluación eliminada' };
   }
 }

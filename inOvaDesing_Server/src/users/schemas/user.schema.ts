@@ -5,26 +5,26 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop()
-  idUser: string;
-
-  @Prop()
+  @Prop({ required: true })
   name: string;
 
-  @Prop()
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email: string;
 
-  @Prop()
-  passw: string;
+  @Prop({ required: true })
+  password: string;
 
-  @Prop()
+  @Prop({ required: true, enum: ['docente', 'estudiante'] })
+  rol: string;
+
+  /**
+   * Solo aplica para estudiantes: MongoDB _id del docente que los registró.
+   */
+  @Prop({ default: null })
+  idDocente: string;
+
+  @Prop({ default: true })
   state: boolean;
-
-  @Prop()
-  dateRe: Date;
-
-  @Prop()
-  rol: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
