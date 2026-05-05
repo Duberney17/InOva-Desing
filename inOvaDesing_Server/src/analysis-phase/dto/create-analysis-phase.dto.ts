@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAnalysisPhaseDto {
@@ -7,18 +7,29 @@ export class CreateAnalysisPhaseDto {
   @IsNotEmpty()
   idOVA: string;
 
-  @ApiPropertyOptional({ example: 'El problema es la falta de recursos educativos digitales' })
+  @ApiPropertyOptional({ example: 'Institución pública urbana, grado 5°, área de tecnología' })
   @IsOptional()
   @IsString()
-  problem?: string;
+  contextoEducativo?: string;
 
-  @ApiPropertyOptional({ example: 'Desarrollar habilidades en fotosíntesis' })
+  @ApiPropertyOptional({ example: 'Los estudiantes no comprenden el pensamiento algorítmico' })
   @IsOptional()
   @IsString()
-  objectives?: string;
+  necesidadAprendizaje?: string;
 
-  @ApiPropertyOptional({ example: 'Estudiantes de secundaria, edades 12-15' })
+  @ApiPropertyOptional({ example: 'Estudiantes de grado 5°, entre 10 y 12 años' })
   @IsOptional()
   @IsString()
-  context?: string;
+  publicoObjetivo?: string;
+
+  @ApiPropertyOptional({ example: 'Manejo básico de computador y navegador web' })
+  @IsOptional()
+  @IsString()
+  conocimientosPrevios?: string;
+
+  @ApiPropertyOptional({ example: ['PC / Laptop', 'Tablet'] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  herramientas?: string[];
 }

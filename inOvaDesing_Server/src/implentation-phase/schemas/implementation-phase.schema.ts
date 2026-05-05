@@ -5,18 +5,23 @@ export type ImplementationPhaseDocument = HydratedDocument<ImplementationPhase>;
 
 @Schema({ timestamps: true })
 export class ImplementationPhase {
-  @Prop()
-  idImplementation: string;
-
-  @Prop()
+  @Prop({ required: true })
   idOVA: string;
 
-  @Prop()
-  applicationPlan: string;
+  @Prop({ default: '' })
+  plataformaPublicacion: string;
 
-  @Prop()
-  support: string;
+  @Prop({ default: '' })
+  fechaImplementacion: string;
+
+  @Prop({ default: '' })
+  grupoObjetivo: string;
+
+  @Prop({ default: '' })
+  requisitosTecnicos: string;
+
+  @Prop({ default: '' })
+  planComunicacion: string;
 }
 
-export const ImplementationPhaseSchema =
-  SchemaFactory.createForClass(ImplementationPhase);
+export const ImplementationPhaseSchema = SchemaFactory.createForClass(ImplementationPhase);
