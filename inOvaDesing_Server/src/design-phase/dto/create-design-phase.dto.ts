@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateDesignPhaseDto {
@@ -7,18 +8,31 @@ export class CreateDesignPhaseDto {
   @IsNotEmpty()
   idOVA: string;
 
-  @ApiPropertyOptional({ example: 'Aprendizaje basado en problemas' })
+  @ApiPropertyOptional({ example: 'El estudiante será capaz de identificar las etapas de un algoritmo' })
   @IsOptional()
   @IsString()
-  strategies?: string;
+  objetivoAprendizaje?: string;
 
-  @ApiPropertyOptional({ example: 'El estudiante identificará las etapas de la fotosíntesis' })
+  @ApiPropertyOptional({ example: 'lineal', enum: ['lineal', 'ramificada', 'mixta'] })
   @IsOptional()
   @IsString()
-  specificObjectives?: string;
+  estructuraOva?: string;
 
-  @ApiPropertyOptional({ example: 'Módulo 1: Introducción, Módulo 2: Proceso' })
+  @ApiPropertyOptional({ example: 'Aprendizaje basado en problemas (ABP)' })
   @IsOptional()
   @IsString()
-  structure?: string;
+  estrategiaPedagogica?: string;
+
+  @ApiPropertyOptional({ example: 'El estudiante resuelve correctamente al menos 3 de 5 ejercicios' })
+  @IsOptional()
+  @IsString()
+  indicadoresEvaluacion?: string;
+
+  @ApiPropertyOptional({ example: 60 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(10)
+  @Max(480)
+  tiempoEstimado?: number;
 }

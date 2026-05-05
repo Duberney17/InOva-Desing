@@ -5,20 +5,23 @@ export type DesignPhaseDocument = HydratedDocument<DesignPhase>;
 
 @Schema({ timestamps: true })
 export class DesignPhase {
-  @Prop()
-  idDesign: string;
-
-  @Prop()
+  @Prop({ required: true })
   idOVA: string;
 
-  @Prop()
-  strategies: string;
+  @Prop({ default: '' })
+  objetivoAprendizaje: string;
 
-  @Prop()
-  specificObjectives: string;
+  @Prop({ default: '' })
+  estructuraOva: string;
 
-  @Prop()
-  structure: string;
+  @Prop({ default: '' })
+  estrategiaPedagogica: string;
+
+  @Prop({ default: '' })
+  indicadoresEvaluacion: string;
+
+  @Prop({ default: 0 })
+  tiempoEstimado: number;
 }
 
 export const DesignPhaseSchema = SchemaFactory.createForClass(DesignPhase);

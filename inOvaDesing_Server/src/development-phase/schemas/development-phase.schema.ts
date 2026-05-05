@@ -5,18 +5,23 @@ export type DevelopmentPhaseDocument = HydratedDocument<DevelopmentPhase>;
 
 @Schema({ timestamps: true })
 export class DevelopmentPhase {
-  @Prop()
-  idDevelopment: string;
-
-  @Prop()
+  @Prop({ required: true })
   idOVA: string;
 
-  @Prop()
-  createdResources: string;
+  @Prop({ type: [String], default: [] })
+  tiposContenido: string[];
 
-  @Prop()
-  activities: string;
+  @Prop({ default: '' })
+  descripcionContenido: string;
+
+  @Prop({ default: '' })
+  recursosNecesarios: string;
+
+  @Prop({ default: '' })
+  herramientaDesarrollo: string;
+
+  @Prop({ default: 'inicio', enum: ['inicio', 'proceso', 'completado'] })
+  estadoAvance: string;
 }
 
-export const DevelopmentPhaseSchema =
-  SchemaFactory.createForClass(DevelopmentPhase);
+export const DevelopmentPhaseSchema = SchemaFactory.createForClass(DevelopmentPhase);

@@ -7,13 +7,28 @@ export class CreateImplentationPhaseDto {
   @IsNotEmpty()
   idOVA: string;
 
-  @ApiPropertyOptional({ example: 'Publicar en plataforma Moodle en semana 5' })
+  @ApiPropertyOptional({ example: 'Moodle' })
   @IsOptional()
   @IsString()
-  applicationPlan?: string;
+  plataformaPublicacion?: string;
 
-  @ApiPropertyOptional({ example: 'Tutoriales de acceso y soporte técnico disponible' })
+  @ApiPropertyOptional({ example: '2026-06-01' })
   @IsOptional()
   @IsString()
-  support?: string;
+  fechaImplementacion?: string;
+
+  @ApiPropertyOptional({ example: 'Grado 5° — Grupo A — IE San José' })
+  @IsOptional()
+  @IsString()
+  grupoObjetivo?: string;
+
+  @ApiPropertyOptional({ example: 'Navegador Chrome actualizado, conexión a internet de mínimo 5 Mbps' })
+  @IsOptional()
+  @IsString()
+  requisitosTecnicos?: string;
+
+  @ApiPropertyOptional({ example: 'Circular informativa enviada a padres y mensaje en classroom' })
+  @IsOptional()
+  @IsString()
+  planComunicacion?: string;
 }

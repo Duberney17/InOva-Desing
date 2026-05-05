@@ -5,20 +5,23 @@ export type AnalysisPhaseDocument = HydratedDocument<AnalysisPhase>;
 
 @Schema({ timestamps: true })
 export class AnalysisPhase {
-  @Prop()
-  idAnalysis: string;
-
-  @Prop()
+  @Prop({ required: true })
   idOVA: string;
 
-  @Prop()
-  problem: string;
+  @Prop({ default: '' })
+  contextoEducativo: string;
 
-  @Prop()
-  objectives: string;
+  @Prop({ default: '' })
+  necesidadAprendizaje: string;
 
-  @Prop()
-  context: string;
+  @Prop({ default: '' })
+  publicoObjetivo: string;
+
+  @Prop({ default: '' })
+  conocimientosPrevios: string;
+
+  @Prop({ type: [String], default: [] })
+  herramientas: string[];
 }
 
 export const AnalysisPhaseSchema = SchemaFactory.createForClass(AnalysisPhase);

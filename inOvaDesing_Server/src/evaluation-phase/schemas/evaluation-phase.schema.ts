@@ -5,18 +5,23 @@ export type EvaluationPhaseDocument = HydratedDocument<EvaluationPhase>;
 
 @Schema({ timestamps: true })
 export class EvaluationPhase {
-  @Prop()
-  idEvaluationPhase: string;
-
-  @Prop()
+  @Prop({ required: true })
   idOVA: string;
 
-  @Prop()
-  instruments: string;
+  @Prop({ type: [String], default: [] })
+  tiposEvaluacion: string[];
 
-  @Prop()
-  expectedResults: string;
+  @Prop({ default: '' })
+  criteriosEvaluacion: string;
+
+  @Prop({ type: [String], default: [] })
+  instrumentos: string[];
+
+  @Prop({ default: '' })
+  resultadosEsperados: string;
+
+  @Prop({ default: '' })
+  planMejora: string;
 }
 
-export const EvaluationPhaseSchema =
-  SchemaFactory.createForClass(EvaluationPhase);
+export const EvaluationPhaseSchema = SchemaFactory.createForClass(EvaluationPhase);
