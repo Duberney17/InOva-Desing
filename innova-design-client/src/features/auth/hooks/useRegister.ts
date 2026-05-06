@@ -23,7 +23,15 @@ export function useRegister() {
     setIsLoading(true)
     setError(null)
     try {
-      const { user, access_token } = await authService.register(values)
+      // Limpiamos idDocente: el backend prefiere undefined a string vacío
+      const payload: RegisterFormValues = {
+        ...values,
+        idDocente:
+          values.idDocente && values.idDocente.trim().length > 0
+            ? values.idDocente.trim()
+            : undefined,
+      }
+      const { user, access_token } = await authService.register(payload)
       setSession(user, access_token)
       navigate('/dashboard', { replace: true })
     } catch (err) {

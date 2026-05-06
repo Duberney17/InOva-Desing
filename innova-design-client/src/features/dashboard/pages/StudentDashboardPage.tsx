@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useCurrentUser } from '@/store/auth.store'
 import { ovaService, type OvaResponse } from '@/features/ova/services/ova.service'
+import { CreateOvaModal } from '@/features/ova/components/CreateOvaModal'
 import { DashboardHeader } from '../components/DashboardHeader'
 import { OvaActiveCard } from '../components/OvaActiveCard'
+import { OvaListItem } from '../components/OvaListItem'
 import { OvaSummaryPanel } from '../components/OvaSummaryPanel'
 import { RecentActivityPanel } from '../components/RecentActivityPanel'
 import type { Ova, ActivityItem } from '../types/dashboard.types'
@@ -20,7 +21,7 @@ function buildOva(raw: OvaResponse, completadas: PhaseSlug[], faseActual: PhaseS
     id: raw._id,
     title: raw.title,
     createdAt: new Date(raw.createdAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }),
-    status: raw.state === 'completado' ? 'completado' : 'en_progreso',
+    status: raw.state === 'completado' ? 'completado' : raw.state === 'revisado' ? 'revisado' : 'en_progreso',
     progress: porcentaje,
     completedPhases: completadas.length,
     totalPhases: 5,
@@ -43,46 +44,86 @@ const STATIC_ACTIVITY: ActivityItem[] = [
   { id: '2', description: 'Tu OVA está en progreso',          time: 'Hoy',    type: 'warning' },
 ]
 
+/**
+ * Dashboard del estudiante.
+ *
+ * Estrategia de carga (N + 1, simple y suficiente para MVP):
+ *  1. GET /ovas/student/:userId  → lista todos los OVAs
+ *  2. Por cada OVA, GET /user-progress/ova/:id/student/:userId (en paralelo)
+ *  3. Construimos el modelo Ova con progreso real
+ *  4. Elegimos el "activo" (primero en_progreso) para destacarlo arriba,
+ *     el resto se muestran en la lista lateral.
+ */
 export function StudentDashboardPage() {
   const user = useCurrentUser()
-  const navigate = useNavigate()
   const firstName = user?.name.split(' ')[0] ?? 'estudiante'
 
-  const [activeOva, setActiveOva] = useState<Ova | null>(null)
+  const [ovas, setOvas] = useState<Ova[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   useEffect(() => {
     if (!user?.id) return
+    const userId = user.id
+    let cancelled = false
 
-    ovaService.getStudentOvas(user.id).then(async (ovas) => {
-      const inProgress = ovas.find((o) => o.state === 'en_progreso') ?? ovas[0]
-      if (!inProgress) { setIsLoading(false); return }
+    ovaService
+      .getStudentOvas(userId)
+      .then(async (raws) => {
+        // Cargar progreso de cada OVA en paralelo
+        const enriched = await Promise.all(
+          raws.map(async (raw) => {
+            const progress = await ovaService.getProgress(raw._id, userId)
+            const completadas = (progress?.fasesCompletadas ?? []) as PhaseSlug[]
+            const faseActual = (progress?.faseActual ?? 'analisis') as PhaseSlug
+            const porcentaje = progress?.porcentaje ?? 0
+            return buildOva(raw, completadas, faseActual, porcentaje)
+          }),
+        )
+        if (!cancelled) setOvas(enriched)
+      })
+      .catch(() => {
+        if (!cancelled) setOvas([])
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
 
-      const progress = await ovaService.getProgress(inProgress._id, user.id!)
-      const completadas = (progress?.fasesCompletadas ?? []) as PhaseSlug[]
-      const faseActual = (progress?.faseActual ?? 'analisis') as PhaseSlug
-      const porcentaje = progress?.porcentaje ?? 0
-
-      setActiveOva(buildOva(inProgress, completadas, faseActual, porcentaje))
-    }).catch(() => {
-      setActiveOva(null)
-    }).finally(() => setIsLoading(false))
+    return () => {
+      cancelled = true
+    }
   }, [user?.id])
+
+  // El OVA activo: primero en_progreso, o el primero a secas
+  const activeOva = ovas.find((o) => o.status === 'en_progreso') ?? ovas[0] ?? null
+  const otherOvas = ovas.filter((o) => o.id !== activeOva?.id)
 
   return (
     <div className="min-h-screen bg-[#f0ede6]">
       <DashboardHeader />
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-stone-800">
-            Hola, {firstName} 👋
-          </h1>
-          <p className="mt-1 text-sm text-stone-500">
-            {activeOva
-              ? 'Continúa trabajando en tu OVA — vas por buen camino.'
-              : 'Crea tu primer OVA para comenzar.'}
-          </p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-stone-800">
+              Hola, {firstName} 👋
+            </h1>
+            <p className="mt-1 text-sm text-stone-500">
+              {activeOva
+                ? `Tienes ${ovas.length} OVA${ovas.length === 1 ? '' : 's'} en construcción.`
+                : 'Crea tu primer OVA para comenzar.'}
+            </p>
+          </div>
+
+          {ovas.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(true)}
+              className="shrink-0 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
+            >
+              + Nuevo OVA
+            </button>
+          )}
         </div>
 
         {isLoading ? (
@@ -94,25 +135,34 @@ export function StudentDashboardPage() {
           </div>
         ) : activeOva ? (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-            <OvaActiveCard ova={activeOva} />
+            <div className="flex flex-col gap-6">
+              <OvaActiveCard ova={activeOva} />
+
+              {otherOvas.length > 0 && (
+                <section>
+                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">
+                    Tus otros OVAs ({otherOvas.length})
+                  </h2>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {otherOvas.map((o) => (
+                      <OvaListItem key={o.id} ova={o} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
 
             <div className="flex flex-col gap-4">
               <OvaSummaryPanel ova={activeOva} />
               <RecentActivityPanel items={STATIC_ACTIVITY} />
-
-              <button
-                type="button"
-                onClick={() => navigate('/ova/nuevo')}
-                className="w-full rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
-              >
-                + Nuevo OVA
-              </button>
             </div>
           </div>
         ) : (
-          <EmptyState onNew={() => navigate('/ova/nuevo')} />
+          <EmptyState onNew={() => setIsCreateOpen(true)} />
         )}
       </main>
+
+      <CreateOvaModal open={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
     </div>
   )
 }
