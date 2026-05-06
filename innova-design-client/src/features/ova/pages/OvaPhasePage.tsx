@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useParams, Navigate } from 'react-router-dom'
+import { useParams, Navigate, Link } from 'react-router-dom'
 import { useCurrentUser } from '@/store/auth.store'
 import { DashboardHeader } from '@/features/dashboard/components/DashboardHeader'
 import { PhaseNav } from '../components/PhaseNav'
+import { ResetOvaModal } from '../components/ResetOvaModal'
 import { PHASES, PHASE_INDEX } from '../types/ova.types'
 import type { PhaseSlug } from '@/features/dashboard/types/dashboard.types'
 import { AnalysisForm } from '../forms/AnalysisForm'
@@ -21,6 +22,7 @@ export function OvaPhasePage() {
   const [savedData, setSavedData] = useState<Record<string, unknown> | null>(null)
   const [phaseDocId, setPhaseDocId] = useState<string | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
+  const [isResetOpen, setIsResetOpen] = useState(false)
 
   const phaseConfig = PHASES.find((p) => p.slug === phaseSlug)
 
@@ -88,18 +90,44 @@ export function OvaPhasePage() {
   }
 
   const formProps = { onSave: handleSave, isSaving, defaultValues: savedData ?? undefined }
+  // Key que cambia cuando savedData transiciona null → data, forzando re-mount
+  // del form para que useForm tome los nuevos defaultValues. Patrón estándar
+  // de RHF cuando los defaults llegan asincrónicamente.
+  const formKey = `${ovaId}-${phaseSlug}-${savedData ? 'loaded' : 'empty'}`
+
+  // Fecha del último guardado (si el backend lo trae)
+  const lastUpdated =
+    savedData && typeof savedData.updatedAt === 'string'
+      ? new Date(savedData.updatedAt).toLocaleString('es-CO', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        })
+      : null
 
   return (
     <div className="min-h-screen bg-[#f0ede6]">
       <DashboardHeader />
 
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-6">
-          <p className="text-xs font-medium uppercase tracking-wide text-stone-400">
-            Fase {phaseIdx + 1} de {PHASES.length}
-          </p>
-          <h1 className="mt-0.5 text-2xl font-bold text-stone-800">{phaseConfig.label}</h1>
-          <p className="mt-1 text-sm text-stone-500">{phaseConfig.objective}</p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-stone-400">
+              Fase {phaseIdx + 1} de {PHASES.length}
+            </p>
+            <h1 className="mt-0.5 text-2xl font-bold text-stone-800">{phaseConfig.label}</h1>
+            <p className="mt-1 text-sm text-stone-500">{phaseConfig.objective}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsResetOpen(true)}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="size-3.5">
+              <path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clipRule="evenodd" />
+            </svg>
+            Reiniciar OVA
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
@@ -136,6 +164,15 @@ export function OvaPhasePage() {
                 </div>
               )}
 
+              {lastUpdated && !isLoading ? (
+                <p className="mb-3 flex items-center gap-1.5 text-xs text-stone-500">
+                  <svg viewBox="0 0 20 20" fill="currentColor" className="size-3.5 text-brand-500">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                  </svg>
+                  Última actualización: {lastUpdated}
+                </p>
+              ) : null}
+
               {isLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <svg className="size-8 animate-spin text-brand-500" viewBox="0 0 24 24" fill="none">
@@ -145,43 +182,49 @@ export function OvaPhasePage() {
                 </div>
               ) : (
                 <>
-                  {currentSlug === 'analisis'       && <AnalysisForm       {...formProps} />}
-                  {currentSlug === 'diseno'          && <DesignForm          {...formProps} />}
-                  {currentSlug === 'desarrollo'      && <DevelopmentForm     {...formProps} />}
-                  {currentSlug === 'implementacion'  && <ImplementationForm  {...formProps} />}
-                  {currentSlug === 'evaluacion'      && <EvaluationForm      {...formProps} />}
+                  {currentSlug === 'analisis'       && <AnalysisForm       key={formKey} {...formProps} />}
+                  {currentSlug === 'diseno'          && <DesignForm          key={formKey} {...formProps} />}
+                  {currentSlug === 'desarrollo'      && <DevelopmentForm     key={formKey} {...formProps} />}
+                  {currentSlug === 'implementacion'  && <ImplementationForm  key={formKey} {...formProps} />}
+                  {currentSlug === 'evaluacion'      && <EvaluationForm      key={formKey} {...formProps} />}
                 </>
               )}
             </div>
 
             <div className="flex items-center justify-between">
               {prevPhase ? (
-                <a
-                  href={`/ova/${ovaId}/fase/${prevPhase.slug}`}
+                <Link
+                  to={`/ova/${ovaId}/fase/${prevPhase.slug}`}
                   className="flex items-center gap-2 text-sm font-medium text-stone-500 transition hover:text-stone-700"
                 >
                   <svg viewBox="0 0 20 20" fill="currentColor" className="size-4">
                     <path fillRule="evenodd" d="M11.78 5.22a.75.75 0 010 1.06L8.06 10l3.72 3.72a.75.75 0 11-1.06 1.06l-4.25-4.25a.75.75 0 010-1.06l4.25-4.25a.75.75 0 011.06 0z" clipRule="evenodd" />
                   </svg>
                   Fase anterior: {prevPhase.label}
-                </a>
+                </Link>
               ) : <span />}
 
               {nextPhase && (
-                <a
-                  href={`/ova/${ovaId}/fase/${nextPhase.slug}`}
+                <Link
+                  to={`/ova/${ovaId}/fase/${nextPhase.slug}`}
                   className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
                 >
                   Siguiente: {nextPhase.label}
                   <svg viewBox="0 0 20 20" fill="currentColor" className="size-4">
                     <path fillRule="evenodd" d="M8.22 5.22a.75.75 0 011.06 0l4.25 4.25a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 010-1.06z" clipRule="evenodd" />
                   </svg>
-                </a>
+                </Link>
               )}
             </div>
           </main>
         </div>
       </div>
+
+      <ResetOvaModal
+        open={isResetOpen}
+        onClose={() => setIsResetOpen(false)}
+        ovaId={ovaId}
+      />
     </div>
   )
 }

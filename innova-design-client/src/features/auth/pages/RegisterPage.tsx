@@ -1,4 +1,4 @@
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from 'react-router-dom'
 import {
@@ -35,10 +35,14 @@ export function RegisterPage() {
       name: '',
       email: '',
       password: '',
+      idDocente: '',
       // Sin valor por defecto: forzamos al usuario a elegir.
       rol: undefined as unknown as RegisterFormValues['rol'],
     },
   })
+
+  // Observamos el rol elegido para mostrar/ocultar el campo "código de docente"
+  const rolSelected = useWatch({ control, name: 'rol' })
 
   const { submit, isLoading, error } = useRegister()
 
@@ -117,6 +121,18 @@ export function RegisterPage() {
             </div>
           )}
         />
+
+        {/* Campo opcional para vincular con docente — solo si rol=estudiante */}
+        {rolSelected === 'estudiante' ? (
+          <Input
+            label="Código de tu docente (opcional)"
+            type="text"
+            placeholder="Pega aquí el código que te dio tu docente"
+            hint="Pídeselo a tu docente. Si no lo tienes, puedes dejarlo en blanco."
+            error={errors.idDocente?.message}
+            {...register('idDocente')}
+          />
+        ) : null}
 
         {/* Error global del backend (email ya existe, etc.) */}
         {error ? (

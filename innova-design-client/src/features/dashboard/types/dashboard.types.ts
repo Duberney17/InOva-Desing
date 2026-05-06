@@ -1,5 +1,5 @@
 export type PhaseStatus = 'completed' | 'in_progress' | 'pending'
-export type OvaStatus = 'en_progreso' | 'completado' | 'borrador'
+export type OvaStatus = 'en_progreso' | 'completado' | 'revisado' | 'borrador'
 export type EvaluationStatus = 'pendiente' | 'aprobado' | 'rechazado'
 export type ActivityType = 'success' | 'warning' | 'neutral'
 
