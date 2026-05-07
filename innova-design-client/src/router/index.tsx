@@ -3,6 +3,7 @@ import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { OvaPhasePage } from '@/features/ova/pages/OvaPhasePage'
+import { OvaPreviewPage } from '@/features/ova/pages/OvaPreviewPage'
 import { ProtectedRoute } from '@/router/ProtectedRoute'
 import { PublicOnlyRoute } from '@/router/PublicOnlyRoute'
 
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/dashboard',                         element: <DashboardPage />  },
       { path: '/ova/:ovaId/fase/:phaseSlug',        element: <OvaPhasePage />   },
+      { path: '/ova/:ovaId/preview',                element: <OvaPreviewPage /> },
     ],
   },
   {

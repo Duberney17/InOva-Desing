@@ -75,10 +75,13 @@ export function StudentRow({ student, ovas, isLoadingOvas }: StudentRowProps) {
           ) : (
             <ul className="flex flex-col gap-2">
               {ovas.map((ova) => (
-                <li key={ova.id}>
+                <li
+                  key={ova.id}
+                  className="flex items-center gap-2 rounded-lg border border-stone-200 px-3 py-2.5 transition hover:border-brand-300 hover:bg-brand-50/40"
+                >
                   <Link
                     to={`/ova/${ova.id}/fase/${ova.faseActual}`}
-                    className="flex items-center gap-3 rounded-lg border border-stone-200 px-3 py-2.5 transition hover:border-brand-300 hover:bg-brand-50/40"
+                    className="flex min-w-0 flex-1 items-center gap-3"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-stone-800">{ova.title}</p>
@@ -91,6 +94,17 @@ export function StudentRow({ student, ovas, isLoadingOvas }: StudentRowProps) {
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${STATUS_COLOR[ova.status]}`}>
                       {STATUS_LABEL[ova.status]}
                     </span>
+                  </Link>
+                  <Link
+                    to={`/ova/${ova.id}/preview`}
+                    title="Ver vista previa"
+                    aria-label="Ver vista previa"
+                    className="shrink-0 rounded-md p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+                  >
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="size-4">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                    </svg>
                   </Link>
                 </li>
               ))}
