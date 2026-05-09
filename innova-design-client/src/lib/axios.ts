@@ -9,12 +9,19 @@ import { env } from '@/lib/env'
  * Así, cualquier cambio de configuración (baseURL, headers, timeouts) ocurre
  * en un único lugar.
  */
+/**
+ * IMPORTANTE: NO declaramos Content-Type por defecto.
+ * Axios lo elige solo según el tipo de body:
+ *   - objeto plano  → "application/json"
+ *   - FormData      → "multipart/form-data; boundary=..."  (con boundary correcto)
+ *   - URLSearchParams → "application/x-www-form-urlencoded"
+ *
+ * Si forzamos un default a JSON, axios NO lo sobreescribe en uploads
+ * y multer recibe basura → 400 Bad Request.
+ */
 export const api = axios.create({
   baseURL: env.apiUrl,
   timeout: 15_000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 // ─── Interceptor de REQUEST ──────────────────────────────────────────────

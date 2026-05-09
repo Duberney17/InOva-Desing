@@ -24,6 +24,7 @@ import { ScoModule } from './sco/sco.module';
 import { ScormResourceModule } from './scorm-resource/scorm-resource.module';
 import { LomMetadataModule } from './lom-metadata/lom-metadata.module';
 import { ImplentationPhaseModule } from './implentation-phase/implentation-phase.module';
+import { OvaFilesModule } from './ova-files/ova-files.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { ImplentationPhaseModule } from './implentation-phase/implentation-phase
     ScormResourceModule,
     LomMetadataModule,
     ImplentationPhaseModule,
+    OvaFilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

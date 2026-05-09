@@ -16,6 +16,8 @@ import { ovaService, type OvaResponse } from '../services/ova.service'
 import { PhaseDataReadOnly } from '@/features/instructor-eval/components/PhaseDataReadOnly'
 import { InstructorEvalPanel } from '@/features/instructor-eval/components/InstructorEvalPanel'
 import { EvaluationFeedback } from '@/features/instructor-eval/components/EvaluationFeedback'
+// Adjuntos por fase
+import { PhaseFiles } from '@/features/ova-files/components/PhaseFiles'
 
 export function OvaPhasePage() {
   const { ovaId, phaseSlug } = useParams<{ ovaId: string; phaseSlug: string }>()
@@ -199,6 +201,14 @@ export function OvaPhasePage() {
               <>
                 <PhaseDataReadOnly data={savedData} fase={currentSlug} />
                 {ova ? (
+                  <PhaseFiles
+                    idOVA={ovaId}
+                    fase={currentSlug}
+                    canEdit={false}
+                    idEstudiante={ova.idEstudiante}
+                  />
+                ) : null}
+                {ova ? (
                   <InstructorEvalPanel
                     idOVA={ovaId}
                     fase={currentSlug}
@@ -248,6 +258,18 @@ export function OvaPhasePage() {
                 {currentSlug === 'desarrollo'      && <DevelopmentForm     key={formKey} {...formProps} />}
                 {currentSlug === 'implementacion'  && <ImplementationForm  key={formKey} {...formProps} />}
                 {currentSlug === 'evaluacion'      && <EvaluationForm      key={formKey} {...formProps} />}
+
+                {/* Archivos adjuntos de esta fase (al final del formulario, fuera del onSubmit) */}
+                {ova && user?.id ? (
+                  <div className="mt-6">
+                    <PhaseFiles
+                      idOVA={ovaId}
+                      fase={currentSlug}
+                      canEdit={user.id === ova.idEstudiante}
+                      idEstudiante={ova.idEstudiante}
+                    />
+                  </div>
+                ) : null}
               </div>
             )}
 
