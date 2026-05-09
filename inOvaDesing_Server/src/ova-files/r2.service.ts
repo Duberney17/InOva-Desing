@@ -27,10 +27,13 @@ export class R2Service implements OnModuleInit {
 
   constructor(private readonly config: ConfigService) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     // trim() defensivo por si el .env tiene espacios al final/comillas raras
-    const url = this.config.get<string>('SUPABASE_URL')?.trim().replace(/['"]/g, '');
-    const serviceKey = this.config.get<string>('SUPABASE_SERVICE_KEY')?.trim().replace(/['"]/g, '');
+    let url = this.config.get<string>('SUPABASE_URL')?.trim().replace(/['"]/g, '');
+    const serviceKey = this.config
+      .get<string>('SUPABASE_SERVICE_KEY')
+      ?.trim()
+      .replace(/['"]/g, '');
     this.bucket = (this.config.get<string>('SUPABASE_BUCKET') ?? '')
       .trim()
       .replace(/['"]/g, '');
@@ -42,11 +45,54 @@ export class R2Service implements OnModuleInit {
       return;
     }
 
-    this.logger.log(`Supabase Storage listo · bucket="${this.bucket}" · url=${url}`);
+    // Quitar slash final si lo hay
+    url = url.replace(/\/+$/, '');
+
+    // Validar formato de URL: debe ser https://xxx.supabase.co (sin path)
+    const urlValid = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url);
+    if (!urlValid) {
+      this.logger.error(
+        `❌ SUPABASE_URL no tiene el formato correcto. Esperado: https://xxxxx.supabase.co · Recibido: "${url}"`,
+      );
+    }
+
+    // Validar formato de la key
+    const isNewKey = serviceKey.startsWith('sb_secret_');
+    const isLegacyKey = serviceKey.startsWith('eyJ');
+    if (!isNewKey && !isLegacyKey) {
+      this.logger.error(
+        `❌ SUPABASE_SERVICE_KEY no parece válida. Debe empezar con "sb_secret_" (nuevo sistema) o "eyJ" (legacy JWT). Recibido: "${serviceKey.slice(0, 15)}..."`,
+      );
+    }
 
     this.supabase = createClient(url, serviceKey, {
-      auth: { persistSession: false }, // backend, no necesitamos sesión
+      auth: { persistSession: false },
     });
+
+    this.logger.log(
+      `Supabase Storage init · bucket="${this.bucket}" · url=${url} · keyType=${isNewKey ? 'sb_secret' : isLegacyKey ? 'legacy_jwt' : 'desconocida'}`,
+    );
+
+    // ── PRUEBA DE CONEXIÓN ──
+    // Intentamos listar los buckets. Si falla aquí, NO es el path: es auth/config.
+    try {
+      const { data: buckets, error } = await this.supabase.storage.listBuckets();
+      if (error) {
+        this.logger.error(`❌ No pudimos listar buckets: ${error.message}`);
+        return;
+      }
+      const names = (buckets ?? []).map((b) => b.name);
+      this.logger.log(`Buckets visibles en Supabase: [${names.join(', ')}]`);
+      if (!names.includes(this.bucket)) {
+        this.logger.error(
+          `❌ El bucket "${this.bucket}" NO existe en Supabase. Buckets disponibles: ${names.join(', ') || '(ninguno)'}`,
+        );
+      } else {
+        this.logger.log(`✅ Bucket "${this.bucket}" encontrado y accesible`);
+      }
+    } catch (err) {
+      this.logger.error(`❌ Error probando conexión: ${(err as Error).message}`);
+    }
   }
 
   /** Tira un error claro si las vars no están seteadas */
