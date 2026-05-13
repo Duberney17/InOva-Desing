@@ -48,8 +48,28 @@ export class OvasController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar OVA' })
+  @ApiOperation({ summary: 'Eliminar OVA (sin dependencias — legacy)' })
   remove(@Param('id') id: string) {
     return this.ovasService.remove(id);
+  }
+
+  /**
+   * Eliminar el OVA Y todo lo relacionado:
+   * 5 fases ADDIE + progreso + evaluaciones + archivos en Supabase.
+   */
+  @Delete(':id/full')
+  @ApiOperation({ summary: 'Eliminar OVA y TODO lo relacionado (cascade)' })
+  removeCascade(@Param('id') id: string) {
+    return this.ovasService.removeCascade(id);
+  }
+
+  /**
+   * Reiniciar el OVA desde cero: borra fases + progreso + archivos
+   * pero mantiene el OVA y las evaluaciones del docente.
+   */
+  @Patch(':id/clear')
+  @ApiOperation({ summary: 'Reiniciar OVA desde cero (mantiene OVA y evaluaciones)' })
+  clearOva(@Param('id') id: string) {
+    return this.ovasService.clearOva(id);
   }
 }

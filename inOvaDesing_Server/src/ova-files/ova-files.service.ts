@@ -91,4 +91,15 @@ export class OvaFilesService {
     await this.model.deleteOne({ _id: id }).exec();
     return { deleted: true, id };
   }
+
+  /**
+   * Borra TODOS los archivos de un OVA (R2 + Mongo).
+   * Usado por cascade delete y reset profundo.
+   */
+  async removeByOva(idOVA: string) {
+    const docs = await this.model.find({ idOVA }).exec();
+    await Promise.all(docs.map((d) => this.r2.deleteFile(d.storageKey)));
+    const result = await this.model.deleteMany({ idOVA }).exec();
+    return { deleted: result.deletedCount };
+  }
 }

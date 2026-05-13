@@ -129,11 +129,26 @@ export function OvaPhasePage() {
         })
       : null
 
+  // OVA finalizado por el docente: el estudiante ya NO puede editar ni reiniciar.
+  const isFinalizado = ova?.state === 'revisado'
+  const isStudentOnFinalizado = !isTeacher && isFinalizado
+
   return (
     <div className="min-h-screen bg-[#f0ede6]">
       <DashboardHeader />
 
       <div className="mx-auto max-w-7xl px-6 py-8">
+        {/* Breadcrumb / volver al dashboard */}
+        <Link
+          to="/dashboard"
+          className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-stone-500 transition hover:text-stone-700"
+        >
+          <svg viewBox="0 0 20 20" fill="currentColor" className="size-3.5">
+            <path fillRule="evenodd" d="M11.78 5.22a.75.75 0 010 1.06L8.06 10l3.72 3.72a.75.75 0 11-1.06 1.06l-4.25-4.25a.75.75 0 010-1.06l4.25-4.25a.75.75 0 011.06 0z" clipRule="evenodd" />
+          </svg>
+          Volver al dashboard
+        </Link>
+
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-stone-400">
@@ -161,8 +176,9 @@ export function OvaPhasePage() {
               Vista previa
             </Link>
 
-            {/* Solo el estudiante puede reiniciar su OVA */}
-            {!isTeacher && (
+            {/* El botón Reiniciar solo aparece para estudiante y SI el OVA aún
+                no está finalizado. Una vez finalizado no se puede reiniciar. */}
+            {!isTeacher && !isFinalizado && (
               <button
                 type="button"
                 onClick={() => setIsResetOpen(true)}
@@ -215,6 +231,36 @@ export function OvaPhasePage() {
                     idEstudiante={ova.idEstudiante}
                   />
                 ) : null}
+              </>
+            ) : isStudentOnFinalizado ? (
+              /* ─── ESTUDIANTE + OVA FINALIZADO → SOLO LECTURA ─── */
+              <>
+                <div className="rounded-2xl border-l-4 border-purple-400 bg-purple-50 p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="size-5 shrink-0 text-purple-600">
+                      <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.836a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-semibold text-purple-900">
+                        Este OVA fue finalizado por tu docente
+                      </p>
+                      <p className="mt-1 text-xs text-purple-800/80">
+                        Tu trabajo fue aprobado en las 5 fases ADDIE. Ya no se puede editar ni reiniciar. Si deseas empezar uno nuevo, puedes crearlo desde tu dashboard.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <PhaseDataReadOnly data={savedData} fase={currentSlug} />
+                {ova ? (
+                  <PhaseFiles
+                    idOVA={ovaId}
+                    fase={currentSlug}
+                    canEdit={false}
+                    idEstudiante={ova.idEstudiante}
+                  />
+                ) : null}
+                <EvaluationFeedback idOVA={ovaId} fase={currentSlug} />
               </>
             ) : (
               /* ─── VISTA DEL ESTUDIANTE ─── */

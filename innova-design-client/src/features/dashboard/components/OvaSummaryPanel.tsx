@@ -1,4 +1,4 @@
-import type { Ova } from '../types/dashboard.types'
+import type { Ova, OvaStatus } from '../types/dashboard.types'
 
 const EVAL_STYLES = {
   pendiente: 'text-amber-600',
@@ -10,6 +10,20 @@ const EVAL_LABEL = {
   pendiente: 'Pendiente',
   aprobado:  'Aprobado',
   rechazado: 'Rechazado',
+}
+
+const STATUS_LABEL: Record<OvaStatus, string> = {
+  en_progreso: 'En progreso',
+  completado:  'Completado',
+  revisado:    'Finalizado',
+  borrador:    'Borrador',
+}
+
+const STATUS_COLOR: Record<OvaStatus, string> = {
+  en_progreso: 'text-amber-700',
+  completado:  'text-brand-700',
+  revisado:    'text-purple-700',
+  borrador:    'text-stone-600',
 }
 
 interface OvaSummaryPanelProps {
@@ -32,7 +46,9 @@ export function OvaSummaryPanel({ ova }: OvaSummaryPanelProps) {
         </Row>
 
         <Row label="Estado">
-          <span className="font-semibold text-stone-800 capitalize">En progreso</span>
+          <span className={`font-semibold ${STATUS_COLOR[ova.status]}`}>
+            {STATUS_LABEL[ova.status]}
+          </span>
         </Row>
 
         <Row label="Evaluación docente">
