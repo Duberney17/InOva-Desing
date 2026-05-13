@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react'
 import { useCurrentUser } from '@/store/auth.store'
 import { ovaService, type OvaResponse } from '@/features/ova/services/ova.service'
 import { CreateOvaModal } from '@/features/ova/components/CreateOvaModal'
+import { instructorEvalService } from '@/features/instructor-eval/services/instructor-eval.service'
 import { DashboardHeader } from '../components/DashboardHeader'
 import { OvaActiveCard } from '../components/OvaActiveCard'
 import { OvaListItem } from '../components/OvaListItem'
 import { OvaSummaryPanel } from '../components/OvaSummaryPanel'
 import { RecentActivityPanel } from '../components/RecentActivityPanel'
-import type { Ova, ActivityItem } from '../types/dashboard.types'
+import type { Ova, ActivityItem, EvaluationStatus } from '../types/dashboard.types'
 import type { PhaseSlug } from '../types/dashboard.types'
 
 const PHASE_ORDER: PhaseSlug[] = ['analisis', 'diseno', 'desarrollo', 'implementacion', 'evaluacion']
@@ -16,7 +17,13 @@ const PHASE_LABEL: Record<PhaseSlug, string> = {
   implementacion: 'Implementación', evaluacion: 'Evaluación',
 }
 
-function buildOva(raw: OvaResponse, completadas: PhaseSlug[], faseActual: PhaseSlug, porcentaje: number): Ova {
+function buildOva(
+  raw: OvaResponse,
+  completadas: PhaseSlug[],
+  faseActual: PhaseSlug,
+  porcentaje: number,
+  teacherEvaluation: EvaluationStatus,
+): Ova {
   return {
     id: raw._id,
     title: raw.title,
@@ -25,7 +32,7 @@ function buildOva(raw: OvaResponse, completadas: PhaseSlug[], faseActual: PhaseS
     progress: porcentaje,
     completedPhases: completadas.length,
     totalPhases: 5,
-    teacherEvaluation: 'pendiente',
+    teacherEvaluation,
     lastActivity: 'Hoy',
     phases: PHASE_ORDER.map((slug) => ({
       slug,
@@ -39,10 +46,47 @@ function buildOva(raw: OvaResponse, completadas: PhaseSlug[], faseActual: PhaseS
   }
 }
 
-const STATIC_ACTIVITY: ActivityItem[] = [
-  { id: '1', description: 'Iniciaste sesión en InOva Design', time: 'Ahora',  type: 'success' },
-  { id: '2', description: 'Tu OVA está en progreso',          time: 'Hoy',    type: 'warning' },
-]
+/**
+ * Construye el feed de actividad reciente basado en el OVA real
+ * (en vez de tener strings hardcodeados).
+ */
+function buildActivity(ova: Ova | null): ActivityItem[] {
+  const items: ActivityItem[] = [
+    { id: 'login', description: 'Iniciaste sesión en InOva Design', time: 'Ahora', type: 'success' },
+  ]
+  if (!ova) return items
+
+  if (ova.status === 'revisado') {
+    items.push({
+      id: 'finalizado',
+      description: `Tu OVA "${ova.title}" fue finalizado por el docente`,
+      time: 'Hoy',
+      type: 'success',
+    })
+  } else if (ova.teacherEvaluation === 'rechazado') {
+    items.push({
+      id: 'ajustes',
+      description: 'El docente pidió ajustes en alguna fase',
+      time: 'Hoy',
+      type: 'warning',
+    })
+  } else if (ova.progress === 100) {
+    items.push({
+      id: 'completo',
+      description: 'Completaste las 5 fases — esperando evaluación del docente',
+      time: 'Hoy',
+      type: 'warning',
+    })
+  } else {
+    items.push({
+      id: 'enprogreso',
+      description: `Tu OVA está en progreso (${ova.progress}%)`,
+      time: 'Hoy',
+      type: 'neutral',
+    })
+  }
+  return items
+}
 
 /**
  * Dashboard del estudiante.
@@ -61,6 +105,10 @@ export function StudentDashboardPage() {
   const [ovas, setOvas] = useState<Ova[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  // Trigger para refrescar la lista cuando se elimina un OVA o se crea uno
+  const [refreshKey, setRefreshKey] = useState(0)
+  // OVA seleccionado como principal (null = autoselección)
+  const [selectedOvaId, setSelectedOvaId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user?.id) return
@@ -70,14 +118,27 @@ export function StudentDashboardPage() {
     ovaService
       .getStudentOvas(userId)
       .then(async (raws) => {
-        // Cargar progreso de cada OVA en paralelo
+        // Cargar progreso + evaluaciones de cada OVA en paralelo
         const enriched = await Promise.all(
           raws.map(async (raw) => {
-            const progress = await ovaService.getProgress(raw._id, userId)
+            const [progress, evals] = await Promise.all([
+              ovaService.getProgress(raw._id, userId),
+              instructorEvalService.getByOva(raw._id),
+            ])
             const completadas = (progress?.fasesCompletadas ?? []) as PhaseSlug[]
             const faseActual = (progress?.faseActual ?? 'analisis') as PhaseSlug
             const porcentaje = progress?.porcentaje ?? 0
-            return buildOva(raw, completadas, faseActual, porcentaje)
+
+            // Cálculo del "estado de evaluación docente" agregado:
+            //   - aprobado: si TODAS las 5 fases están aprobadas
+            //   - rechazado: si AL MENOS una fase está rechazada
+            //   - pendiente: en cualquier otro caso (sin eval o solo algunas)
+            const aprobadas = evals.filter((e) => e.estado === 'aprobado').length
+            const rechazadas = evals.filter((e) => e.estado === 'rechazado').length
+            const teacherEvaluation: EvaluationStatus =
+              aprobadas >= 5 ? 'aprobado' : rechazadas > 0 ? 'rechazado' : 'pendiente'
+
+            return buildOva(raw, completadas, faseActual, porcentaje, teacherEvaluation)
           }),
         )
         if (!cancelled) setOvas(enriched)
@@ -92,10 +153,17 @@ export function StudentDashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [user?.id])
+  }, [user?.id, refreshKey])
 
-  // El OVA activo: primero en_progreso, o el primero a secas
-  const activeOva = ovas.find((o) => o.status === 'en_progreso') ?? ovas[0] ?? null
+  // Después de eliminar un OVA o cerrar el modal de crear, refrescamos
+  const handleRefresh = () => setRefreshKey((k) => k + 1)
+
+  // El OVA activo:
+  //  1. Si el usuario eligió uno explícito y aún existe → ese
+  //  2. Si no, autoselección: primero en progreso, o el primero a secas
+  const selectedExplicit = selectedOvaId ? ovas.find((o) => o.id === selectedOvaId) : null
+  const activeOva =
+    selectedExplicit ?? ovas.find((o) => o.status === 'en_progreso') ?? ovas[0] ?? null
   const otherOvas = ovas.filter((o) => o.id !== activeOva?.id)
 
   return (
@@ -136,7 +204,7 @@ export function StudentDashboardPage() {
         ) : activeOva ? (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
             <div className="flex flex-col gap-6">
-              <OvaActiveCard ova={activeOva} />
+              <OvaActiveCard ova={activeOva} onDeleted={handleRefresh} />
 
               {otherOvas.length > 0 && (
                 <section>
@@ -145,7 +213,12 @@ export function StudentDashboardPage() {
                   </h2>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {otherOvas.map((o) => (
-                      <OvaListItem key={o.id} ova={o} />
+                      <OvaListItem
+                        key={o.id}
+                        ova={o}
+                        onSelect={() => setSelectedOvaId(o.id)}
+                        onDeleted={handleRefresh}
+                      />
                     ))}
                   </div>
                 </section>
@@ -154,7 +227,7 @@ export function StudentDashboardPage() {
 
             <div className="flex flex-col gap-4">
               <OvaSummaryPanel ova={activeOva} />
-              <RecentActivityPanel items={STATIC_ACTIVITY} />
+              <RecentActivityPanel items={buildActivity(activeOva)} />
             </div>
           </div>
         ) : (

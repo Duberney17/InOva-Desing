@@ -25,7 +25,7 @@ const STATUS_COLOR: Record<StudentOvaSummary['status'], string> = {
 const STATUS_LABEL: Record<StudentOvaSummary['status'], string> = {
   en_progreso: 'En progreso',
   completado:  'Completado',
-  revisado:    'Revisado',
+  revisado:    'Finalizado',
 }
 
 /**

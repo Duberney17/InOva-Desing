@@ -29,17 +29,20 @@ export function ResetOvaModal({ open, onClose, ovaId }: ResetOvaModalProps) {
     <Modal
       open={open}
       onClose={isLoading ? () => null : onClose}
-      title="Reiniciar este OVA"
-      description="Se borrará el progreso de las fases (cuáles están completadas) y volverás al inicio. Las respuestas guardadas en cada fase NO se eliminan."
+      title="Reiniciar este OVA desde cero"
+      description="Se borrarán todas las respuestas, archivos adjuntos y el progreso. El OVA se mantiene pero queda vacío."
       size="md"
       dismissOnOverlay={!isLoading}
     >
       <div className="flex flex-col gap-4">
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
-          <p className="font-medium">¿Estás seguro?</p>
-          <p className="mt-1 text-amber-700/90">
-            Volverás a la fase de Análisis y el indicador de progreso se reiniciará a 0%.
-          </p>
+          <p className="font-medium">⚠️ Esta acción es irreversible</p>
+          <ul className="mt-1.5 list-disc pl-5 text-amber-700/90 space-y-0.5">
+            <li>Se borrarán las respuestas de las 5 fases ADDIE</li>
+            <li>Se eliminarán los archivos adjuntos</li>
+            <li>El progreso vuelve a 0%</li>
+            <li>Las evaluaciones del docente SE MANTIENEN</li>
+          </ul>
         </div>
 
         {error ? (

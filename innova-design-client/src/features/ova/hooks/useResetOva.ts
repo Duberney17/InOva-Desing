@@ -30,8 +30,11 @@ export function useResetOva(ovaId: string) {
     setIsLoading(true)
     setError(null)
     try {
-      await ovaService.resetProgress(ovaId, user.id)
-      // Navegar fuerza un nuevo fetch en OvaPhasePage por el effect de [phaseSlug]
+      // Reset PROFUNDO: borra fases + archivos en backend
+      await ovaService.clearOva(ovaId)
+      // Y reseteamos el progreso (% y fasesCompletadas)
+      await ovaService.resetProgress(ovaId, user.id).catch(() => null)
+      // Navegamos a Análisis: el nuevo fetch traerá todo vacío
       navigate(`/ova/${ovaId}/fase/analisis`, { replace: true })
     } catch (err) {
       setError(getApiErrorMessage(err, 'No se pudo reiniciar el OVA'))

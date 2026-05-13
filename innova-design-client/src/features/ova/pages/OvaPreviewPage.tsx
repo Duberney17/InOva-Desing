@@ -155,7 +155,7 @@ export function OvaPreviewPage() {
                     ova.state === 'completado'
                       ? 'Completado'
                       : ova.state === 'revisado'
-                      ? 'Revisado'
+                      ? 'Finalizado'
                       : 'En progreso'
                   }
                 />

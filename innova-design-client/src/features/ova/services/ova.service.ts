@@ -95,4 +95,18 @@ export const ovaService = {
     api
       .patch(`/user-progress/ova/${idOVA}/student/${idEstudiante}/reset`, {})
       .then((r) => r.data),
+
+  /**
+   * Reset PROFUNDO: borra los datos de las 5 fases + progreso + archivos
+   * (mantiene el OVA y las evaluaciones del docente).
+   */
+  clearOva: (idOVA: string): Promise<{ message: string }> =>
+    api.patch(`/ovas/${idOVA}/clear`).then((r) => r.data),
+
+  /**
+   * Eliminar OVA y TODO lo relacionado (5 fases, progreso, evaluaciones, archivos).
+   * Operación irreversible.
+   */
+  deleteOvaFull: (idOVA: string): Promise<{ message: string }> =>
+    api.delete(`/ovas/${idOVA}/full`).then((r) => r.data),
 }
