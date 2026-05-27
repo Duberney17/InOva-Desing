@@ -19,17 +19,8 @@ interface ModalProps {
 }
 
 /**
- * Modal base de la app.
- *
- * Implementación: usamos un <div> overlay + <div> dialog en flujo normal,
- * NO position:fixed (Cowork bloquea iframes con position:fixed). Para una app
- * real con `<dialog>` nativo o un portal sería mejor, pero esta versión
- * funciona en todos lados sin dependencias.
- *
- * Accesibilidad:
- *  - role="dialog", aria-modal="true"
- *  - cierre con Escape
- *  - foco inicial en el primer elemento interactivo
+ * Modal base con accesibilidad: role="dialog", aria-modal, cierre por Escape,
+ * y foco inicial en el primer interactivo del diálogo.
  */
 export function Modal({
   open,
@@ -42,7 +33,6 @@ export function Modal({
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  // Cierre con Escape
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -62,7 +52,6 @@ export function Modal({
     }
   }, [open])
 
-  // Foco inicial
   useEffect(() => {
     if (!open) return
     const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(

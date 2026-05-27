@@ -7,14 +7,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string
 }
 
-/**
- * Input con label, hint y mensaje de error integrados.
- *
- * - Usa useId() para generar un id único y conectar label↔input correctamente
- *   (accesibilidad).
- * - Cambia de color cuando hay error.
- * - Compatible con react-hook-form vía forwardRef.
- */
+/** Input con label, hint y mensaje de error integrados. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { label, error, hint, id, className, ...rest },
   ref,

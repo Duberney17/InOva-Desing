@@ -8,15 +8,7 @@ interface RoleChipProps {
   onClick?: () => void
 }
 
-/**
- * Chip visual para indicar/seleccionar un rol.
- *
- * En LoginPage es solo decorativo (interactive=false): muestra a quién
- * va dirigida la plataforma.
- *
- * En RegisterPage es clickeable: el usuario elige su rol antes de
- * registrarse.
- */
+/** Chip de rol — decorativo (login) o clickeable (registro). */
 export function RoleChip({ role, interactive, selected, onClick }: RoleChipProps) {
   const isDocente = role === 'docente'
   const label = isDocente ? '🎓 Docente' : '👤 Estudiante'

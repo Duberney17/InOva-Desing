@@ -10,15 +10,8 @@ import { TeacherCodeCard } from '../components/TeacherCodeCard'
 import { StudentRow, type StudentOvaSummary } from '../components/StudentRow'
 
 /**
- * Dashboard del docente (CU-5 base).
- *
- * Estrategia de carga:
- *  1. GET /users/students/:idDocente  → estudiantes del docente
- *  2. Por cada estudiante, GET /ovas/student/:id + GET progreso (paralelo)
- *  3. Construimos un mapa { studentId → OvaSummary[] }
- *
- * Para una primera versión es N+1 requests, suficiente. Si crece se
- * puede optimizar con un endpoint agregado en el backend.
+ * Dashboard del docente: lista sus estudiantes y los OVAs de cada uno
+ * con su progreso, accesible para revisar/evaluar.
  */
 export function TeacherDashboardPage() {
   const user = useCurrentUser()
@@ -44,7 +37,6 @@ export function TeacherDashboardPage() {
         if (cancelled) return
         setStudents(sts)
 
-        // Cargar OVAs y progreso de cada estudiante en paralelo
         const entries = await Promise.all(
           sts.map(async (s) => {
             try {

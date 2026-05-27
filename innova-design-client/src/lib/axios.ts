@@ -4,33 +4,16 @@ import { env } from '@/lib/env'
 /**
  * Cliente HTTP único de la app.
  *
- * Patrón: una sola instancia configurada que se importa donde sea necesaria.
- * Nunca llamamos a `axios` directamente desde un service; siempre `api`.
- * Así, cualquier cambio de configuración (baseURL, headers, timeouts) ocurre
- * en un único lugar.
- */
-/**
- * IMPORTANTE: NO declaramos Content-Type por defecto.
- * Axios lo elige solo según el tipo de body:
- *   - objeto plano  → "application/json"
- *   - FormData      → "multipart/form-data; boundary=..."  (con boundary correcto)
- *   - URLSearchParams → "application/x-www-form-urlencoded"
- *
- * Si forzamos un default a JSON, axios NO lo sobreescribe en uploads
- * y multer recibe basura → 400 Bad Request.
+ * IMPORTANTE: no declaramos Content-Type por defecto — axios lo elige según
+ * el tipo de body (JSON, FormData, URLSearchParams). Forzarlo rompe uploads.
  */
 export const api = axios.create({
   baseURL: env.apiUrl,
   timeout: 15_000,
 })
 
-// ─── Interceptor de REQUEST ──────────────────────────────────────────────
-// Se ejecuta antes de enviar cada petición. Aquí inyectamos el JWT si existe.
-//
-// ¿Por qué leemos el token desde localStorage en vez de importar el store?
-// Porque importar el store de Zustand desde aquí crearía un ciclo de
-// dependencias (store → axios → store). Leer la "fuente de verdad" persistida
-// es más simple y evita el ciclo.
+// Inyectar JWT en cada request. Leemos directo del localStorage para evitar
+// el ciclo store → axios → store.
 api.interceptors.request.use((config) => {
   const raw = localStorage.getItem('inova-auth')
   if (raw) {
@@ -43,22 +26,18 @@ api.interceptors.request.use((config) => {
         config.headers.set('Authorization', `Bearer ${token}`)
       }
     } catch {
-      // Token corrupto: lo ignoramos en silencio.
+      // token corrupto: ignoramos
     }
   }
   return config
 })
 
-// ─── Interceptor de RESPONSE ─────────────────────────────────────────────
-// Si el backend responde 401 (token vencido o inválido), limpiamos la
-// sesión y mandamos al usuario al /login. Es el "logout automático".
+// Logout automático si el backend responde 401.
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('inova-auth')
-      // Solo redirigimos si NO estamos ya en una pantalla de auth,
-      // para no romper el formulario de login con un error de credenciales.
       const onAuthScreen =
         window.location.pathname.startsWith('/login') ||
         window.location.pathname.startsWith('/register')
@@ -71,9 +50,8 @@ api.interceptors.response.use(
 )
 
 /**
- * Helper para extraer el mensaje de error legible que envía NestJS.
- * NestJS responde con shape: { statusCode, message, error }
- * donde `message` puede ser string o string[] (validación class-validator).
+ * Extrae el mensaje de error legible que envía NestJS.
+ * Shape: { statusCode, message, error } donde message puede ser string o string[].
  */
 export function getApiErrorMessage(err: unknown, fallback = 'Algo salió mal'): string {
   if (err instanceof AxiosError) {

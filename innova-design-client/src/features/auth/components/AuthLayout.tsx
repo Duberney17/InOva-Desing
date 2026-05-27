@@ -5,15 +5,7 @@ interface AuthLayoutProps {
   children: ReactNode
 }
 
-/**
- * Layout compartido entre LoginPage y RegisterPage.
- *
- * En desktop: dos columnas (BrandPanel | Card).
- * En móvil: solo la card, ocupando todo.
- *
- * Centraliza la decisión visual: si mañana cambia el diseño global de auth,
- * un solo archivo lo modifica.
- */
+/** Layout compartido de auth: dos columnas en desktop, solo card en móvil. */
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-10">

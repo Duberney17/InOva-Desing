@@ -18,10 +18,7 @@ const variantClasses: Record<Variant, string> = {
   ghost: 'bg-transparent text-slate-700 hover:bg-slate-100',
 }
 
-/**
- * Botón base de la app. Usa forwardRef para que sea compatible con
- * formularios y librerías que necesiten acceso al DOM.
- */
+/** Botón base de la app, con variantes y loading state. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(
     { variant = 'primary', isLoading, disabled, children, className, ...rest },
