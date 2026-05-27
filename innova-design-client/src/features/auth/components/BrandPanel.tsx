@@ -1,11 +1,4 @@
-/**
- * Panel izquierdo de las pantallas de auth.
- * Replica el diseño: fondo verde, logo, tagline, descripción y chips
- * con las 5 fases del modelo ADDIE.
- *
- * Es responsive: en móvil se oculta (lg:flex) para que el formulario
- * ocupe toda la pantalla.
- */
+/** Panel izquierdo de las pantallas de auth: brand + chips de fases ADDIE. */
 const ADDIE_PHASES = [
   'Análisis',
   'Diseño',

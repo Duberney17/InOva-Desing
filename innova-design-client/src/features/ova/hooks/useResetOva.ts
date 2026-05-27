@@ -5,16 +5,8 @@ import { useCurrentUser } from '@/store/auth.store'
 import { getApiErrorMessage } from '@/lib/axios'
 
 /**
- * Hook que encapsula el "reiniciar OVA":
- *  1. Llama al endpoint PATCH /user-progress/.../reset
- *  2. En éxito: navega a /ova/:id/fase/analisis (la primera fase)
- *  3. La key del form en OvaPhasePage cambiará automáticamente porque
- *     savedData volverá a null en el siguiente fetch.
- *
- * NOTA: el endpoint backend resetea el progreso pero NO borra los datos
- * de cada fase (analysis-phase, design-phase, etc.). Si quisieras una
- * "limpieza total", habría que añadir endpoints DELETE por fase. Eso es
- * decisión de diseño que dejamos al usuario.
+ * Hook para reiniciar un OVA desde cero. Llama al backend que borra fases,
+ * archivos, progreso y evaluaciones; luego navega a la fase de Análisis.
  */
 export function useResetOva(ovaId: string) {
   const user = useCurrentUser()
@@ -30,11 +22,8 @@ export function useResetOva(ovaId: string) {
     setIsLoading(true)
     setError(null)
     try {
-      // Reset PROFUNDO: borra fases + archivos en backend
       await ovaService.clearOva(ovaId)
-      // Y reseteamos el progreso (% y fasesCompletadas)
       await ovaService.resetProgress(ovaId, user.id).catch(() => null)
-      // Navegamos a Análisis: el nuevo fetch traerá todo vacío
       navigate(`/ova/${ovaId}/fase/analisis`, { replace: true })
     } catch (err) {
       setError(getApiErrorMessage(err, 'No se pudo reiniciar el OVA'))

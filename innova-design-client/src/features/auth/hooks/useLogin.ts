@@ -6,12 +6,9 @@ import { getApiErrorMessage } from '@/lib/axios'
 import type { LoginFormValues } from '@/features/auth/schemas/auth.schemas'
 
 /**
- * Hook que encapsula TODO el flujo de iniciar sesión:
- *   1. Llama al backend.
- *   2. Si va bien → guarda en el store + redirige.
- *   3. Si falla → expone el error para que la UI lo muestre.
- *
- * La UI (LoginPage) solo se preocupa por: "tengo un submit, ¿cómo va?".
+ * Hook que encapsula el flujo de iniciar sesión: llama al backend,
+ * guarda la sesión en el store y redirige al dashboard (o a la ruta
+ * que el usuario intentaba visitar antes de ser bloqueado por el guard).
  */
 export function useLogin() {
   const setSession = useAuthStore((s) => s.setSession)
@@ -20,8 +17,6 @@ export function useLogin() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Si el usuario llegó al /login porque intentó entrar a una ruta protegida,
-  // la guardamos en location.state.from. Tras el login, lo regresamos allí.
   const redirectTo =
     (location.state as { from?: { pathname?: string } } | null)?.from
       ?.pathname ?? '/dashboard'

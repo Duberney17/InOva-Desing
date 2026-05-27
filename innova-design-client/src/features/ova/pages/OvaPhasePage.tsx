@@ -12,11 +12,9 @@ import { DevelopmentForm } from '../forms/DevelopmentForm'
 import { ImplementationForm } from '../forms/ImplementationForm'
 import { EvaluationForm } from '../forms/EvaluationForm'
 import { ovaService, type OvaResponse } from '../services/ova.service'
-// CU-5: vistas dependientes del rol
 import { PhaseDataReadOnly } from '@/features/instructor-eval/components/PhaseDataReadOnly'
 import { InstructorEvalPanel } from '@/features/instructor-eval/components/InstructorEvalPanel'
 import { EvaluationFeedback } from '@/features/instructor-eval/components/EvaluationFeedback'
-// Adjuntos por fase
 import { PhaseFiles } from '@/features/ova-files/components/PhaseFiles'
 
 export function OvaPhasePage() {
@@ -30,12 +28,11 @@ export function OvaPhasePage() {
   const [phaseDocId, setPhaseDocId] = useState<string | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
   const [isResetOpen, setIsResetOpen] = useState(false)
-  // OVA padre — necesitamos su idEstudiante para que el docente pueda crear evaluaciones
   const [ova, setOva] = useState<OvaResponse | null>(null)
 
   const phaseConfig = PHASES.find((p) => p.slug === phaseSlug)
 
-  // Cargar OVA padre (una vez por ovaId)
+  // Cargar OVA padre — necesario para que el docente sepa el idEstudiante
   useEffect(() => {
     if (!ovaId) return
     let cancelled = false
@@ -52,7 +49,7 @@ export function OvaPhasePage() {
     }
   }, [ovaId])
 
-  // Cargar datos de la fase (cada vez que cambia ovaId o phaseSlug)
+  // Cargar datos de la fase actual
   useEffect(() => {
     if (!ovaId || !phaseSlug || !phaseConfig) return
     let cancelled = false
@@ -76,7 +73,7 @@ export function OvaPhasePage() {
     return () => {
       cancelled = true
     }
-    // phaseConfig se deriva de phaseSlug; añadirlo causaría re-fetch innecesario.
+    // phaseConfig se deriva de phaseSlug — no es dep real
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ovaId, phaseSlug])
 
@@ -117,10 +114,10 @@ export function OvaPhasePage() {
   }
 
   const formProps = { onSave: handleSave, isSaving, defaultValues: savedData ?? undefined }
-  // Re-mount del form cuando los defaults cambian asincrónicamente
+  // key que cambia cuando savedData transiciona null → data, fuerza re-mount
+  // del form para que useForm tome los nuevos defaults
   const formKey = `${ovaId}-${phaseSlug}-${savedData ? 'loaded' : 'empty'}`
 
-  // Fecha del último guardado
   const lastUpdated =
     savedData && typeof savedData.updatedAt === 'string'
       ? new Date(savedData.updatedAt).toLocaleString('es-CO', {
@@ -129,7 +126,7 @@ export function OvaPhasePage() {
         })
       : null
 
-  // OVA finalizado por el docente: el estudiante ya NO puede editar ni reiniciar.
+  // Si el OVA está finalizado, el estudiante solo puede ver/eliminar
   const isFinalizado = ova?.state === 'revisado'
   const isStudentOnFinalizado = !isTeacher && isFinalizado
 

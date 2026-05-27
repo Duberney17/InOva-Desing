@@ -6,12 +6,9 @@ import { getApiErrorMessage } from '@/lib/axios'
 import type { RegisterFormValues } from '@/features/auth/schemas/auth.schemas'
 
 /**
- * Hook análogo a useLogin pero para registro.
- *
- * Decisión de diseño: tras un registro exitoso, dejamos al usuario
- * automáticamente logueado y lo mandamos al dashboard. (El backend
- * ya devuelve el access_token en /auth/register, así que no hace
- * falta un segundo round-trip pidiéndole login.)
+ * Hook de registro. Tras crear la cuenta, deja al usuario logueado
+ * y lo manda al dashboard — el backend devuelve el access_token en
+ * la misma respuesta, así no hace falta un segundo round-trip.
  */
 export function useRegister() {
   const setSession = useAuthStore((s) => s.setSession)
@@ -23,7 +20,7 @@ export function useRegister() {
     setIsLoading(true)
     setError(null)
     try {
-      // Limpiamos idDocente: el backend prefiere undefined a string vacío
+      // string vacío → undefined (el backend prefiere undefined a "")
       const payload: RegisterFormValues = {
         ...values,
         idDocente:

@@ -6,15 +6,8 @@ import { getApiErrorMessage } from '@/lib/axios'
 import type { CreateOvaFormValues } from '@/features/ova/schemas/ova.schemas'
 
 /**
- * Hook que encapsula el flujo de "crear OVA":
- *   1. Toma title + description del form
- *   2. Inyecta idEstudiante del usuario logueado (Zustand)
- *   3. Llama al backend POST /ovas
- *   4. Si va bien → navega a la fase Análisis del nuevo OVA
- *   5. Si falla → expone el error
- *
- * Por separación de responsabilidades, el modal/UI no conoce ni axios ni
- * react-router. Solo llama a `submit(values)` y reacciona a `isLoading`/`error`.
+ * Hook de creación de OVA. Inyecta el idEstudiante del usuario logueado,
+ * llama al backend y navega a la fase de Análisis tras éxito.
  */
 export function useCreateOva(onSuccess?: () => void) {
   const user = useCurrentUser()
@@ -36,7 +29,6 @@ export function useCreateOva(onSuccess?: () => void) {
         idEstudiante: user.id,
       })
       onSuccess?.()
-      // Llevamos al usuario directo a la primera fase del OVA recién creado.
       navigate(`/ova/${ova._id}/fase/analisis`)
     } catch (err) {
       setError(getApiErrorMessage(err, 'No se pudo crear el OVA'))

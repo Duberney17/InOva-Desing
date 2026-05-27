@@ -46,10 +46,7 @@ function buildOva(
   }
 }
 
-/**
- * Construye el feed de actividad reciente basado en el OVA real
- * (en vez de tener strings hardcodeados).
- */
+/** Feed de actividad reciente derivado del OVA activo. */
 function buildActivity(ova: Ova | null): ActivityItem[] {
   const items: ActivityItem[] = [
     { id: 'login', description: 'Iniciaste sesión en InOva Design', time: 'Ahora', type: 'success' },
@@ -89,14 +86,9 @@ function buildActivity(ova: Ova | null): ActivityItem[] {
 }
 
 /**
- * Dashboard del estudiante.
- *
- * Estrategia de carga (N + 1, simple y suficiente para MVP):
- *  1. GET /ovas/student/:userId  → lista todos los OVAs
- *  2. Por cada OVA, GET /user-progress/ova/:id/student/:userId (en paralelo)
- *  3. Construimos el modelo Ova con progreso real
- *  4. Elegimos el "activo" (primero en_progreso) para destacarlo arriba,
- *     el resto se muestran en la lista lateral.
+ * Dashboard del estudiante. Carga sus OVAs y, en paralelo, el progreso y
+ * las evaluaciones de cada uno. El OVA "activo" del panel es el que el
+ * usuario seleccionó (o, por defecto, el primero en progreso).
  */
 export function StudentDashboardPage() {
   const user = useCurrentUser()
@@ -105,9 +97,7 @@ export function StudentDashboardPage() {
   const [ovas, setOvas] = useState<Ova[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  // Trigger para refrescar la lista cuando se elimina un OVA o se crea uno
   const [refreshKey, setRefreshKey] = useState(0)
-  // OVA seleccionado como principal (null = autoselección)
   const [selectedOvaId, setSelectedOvaId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -118,7 +108,6 @@ export function StudentDashboardPage() {
     ovaService
       .getStudentOvas(userId)
       .then(async (raws) => {
-        // Cargar progreso + evaluaciones de cada OVA en paralelo
         const enriched = await Promise.all(
           raws.map(async (raw) => {
             const [progress, evals] = await Promise.all([
@@ -129,10 +118,8 @@ export function StudentDashboardPage() {
             const faseActual = (progress?.faseActual ?? 'analisis') as PhaseSlug
             const porcentaje = progress?.porcentaje ?? 0
 
-            // Cálculo del "estado de evaluación docente" agregado:
-            //   - aprobado: si TODAS las 5 fases están aprobadas
-            //   - rechazado: si AL MENOS una fase está rechazada
-            //   - pendiente: en cualquier otro caso (sin eval o solo algunas)
+            // Estado agregado: aprobado si todas las 5 fases lo están,
+            // rechazado si alguna está rechazada, pendiente en otro caso.
             const aprobadas = evals.filter((e) => e.estado === 'aprobado').length
             const rechazadas = evals.filter((e) => e.estado === 'rechazado').length
             const teacherEvaluation: EvaluationStatus =
